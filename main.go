@@ -137,13 +137,13 @@ func calculateMatchScore(metatags1, metatags2 []string) int {
 
 func sendResponse(user1, user2 *User) {
 	room := uuid.New()
-	message := fmt.Sprintf(`{"found": true, "room": "%s"}`, room)
+	message := fmt.Sprintf(`{"room": "%s", "startUserId": "%s"}`, room, user1.ID)
 	err := user1.Conn.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
 		fmt.Println("Ошибка при отправке ответа:", err)
 	}
 
-	message = fmt.Sprintf(`{"found": true, "room": "%s"}`, room)
+	message = fmt.Sprintf(`{"room": "%s", "startUserId": "%s"}`, room, user1.ID)
 	err = user2.Conn.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
 		fmt.Println("Ошибка при отправке ответа:", err)
