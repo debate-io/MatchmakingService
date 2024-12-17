@@ -136,7 +136,7 @@ func calculateMatchScore(metatags1, metatags2 []string) int {
 	return score
 }
 
-func sendWithRetry(conn *websocket.Conn, message string) {
+func sendWithRetry(conn *websocket.Conn, message string, id string) {
 	maxWait := 10 * time.Second
 	waitTime := time.Second
 
@@ -145,7 +145,7 @@ func sendWithRetry(conn *websocket.Conn, message string) {
 		if err == nil {
 			return
 		}
-		fmt.Println("Ошибка при отправке ответа:", err)
+		fmt.Println("Ошибка при отправке ответа:", id, err)
 		time.Sleep(waitTime)
 
 		if waitTime < maxWait {
@@ -159,7 +159,8 @@ func sendWithRetry(conn *websocket.Conn, message string) {
 
 func sendResponse(user1, user2 *User) {
 	room := uuid.New()
-	message := fmt.Sprintf(`{"room": "%s", "startUserId": "%s"}`, room, user1.ID)
-	sendWithRetry(user1.Conn, message)
-	sendWithRetry(user2.Conn, message)
+	messagefirst := fmt.Sprintf(`{"room": "%s", "startUserId": "%s", "opponent": "%s"}`, room, user1.ID, user2.ID)
+	messageSecond := fmt.Sprintf(`{"room": "%s", "startUserId": "%s", "opponent": "%s"}`, room, user1.ID, user1.ID)
+	sendWithRetry(user1.Conn, messagefirst, user1.ID)
+	sendWithRetry(user2.Conn, messageSecond, user2.ID)
 }
