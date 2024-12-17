@@ -4,7 +4,8 @@
 - URL: /ws
 - Метод: GET
 - Протокол: WebSocket
-URL: ws://<host>:<port>/ws
+
+  URL: ws://<host>:<port>/ws
 
 Подключение к WebSocket
       Для подключения к WebSocket серверу, вы можете использовать JavaScript в браузере или любой другой язык программирования, поддерживающий WebSocket.
