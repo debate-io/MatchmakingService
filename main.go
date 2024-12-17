@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -135,13 +136,14 @@ func calculateMatchScore(metatags1, metatags2 []string) int {
 }
 
 func sendResponse(user1, user2 *User) {
-	message := fmt.Sprintf(`{"found": true, "opponent": "%s"}`, user2.ID)
+	room := uuid.New()
+	message := fmt.Sprintf(`{"found": true, "room": "%s"}`, room)
 	err := user1.Conn.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
 		fmt.Println("Ошибка при отправке ответа:", err)
 	}
 
-	message = fmt.Sprintf(`{"found": true, "opponent": "%s"}`, user1.ID)
+	message = fmt.Sprintf(`{"found": true, "room": "%s"}`, room)
 	err = user2.Conn.WriteMessage(websocket.TextMessage, []byte(message))
 	if err != nil {
 		fmt.Println("Ошибка при отправке ответа:", err)
