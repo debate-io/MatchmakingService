@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -135,17 +136,30 @@ func calculateMatchScore(metatags1, metatags2 []string) int {
 	return score
 }
 
+func sendWithRetry(conn *websocket.Conn, message string, id string) {
+	maxWait := 10 * time.Second
+	waitTime := time.Second
+
+	for {
+		err := conn.WriteMessage(websocket.TextMessage, []byte(message))
+		if err == nil {
+			return
+		}
+		fmt.Println("Ошибка при отправке ответа:", id, err)
+		time.Sleep(waitTime)
+
+		if waitTime < maxWait {
+			waitTime *= 2
+			if waitTime > maxWait {
+				waitTime = maxWait
+			}
+		}
+	}
+}
+
 func sendResponse(user1, user2 *User) {
 	room := uuid.New()
 	message := fmt.Sprintf(`{"room": "%s", "startUserId": "%s"}`, room, user1.ID)
-	err := user1.Conn.WriteMessage(websocket.TextMessage, []byte(message))
-	if err != nil {
-		fmt.Println("Ошибка при отправке ответа:", err)
-	}
-
-	message = fmt.Sprintf(`{"room": "%s", "startUserId": "%s"}`, room, user1.ID)
-	err = user2.Conn.WriteMessage(websocket.TextMessage, []byte(message))
-	if err != nil {
-		fmt.Println("Ошибка при отправке ответа:", err)
-	}
+	sendWithRetry(user1.Conn, message, user1.ID)
+	sendWithRetry(user2.Conn, message, user2.ID)
 }
