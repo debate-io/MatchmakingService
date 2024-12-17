@@ -56,5 +56,6 @@ URL: ws://host:port/ws
 
       {
           "room": "1312323",
-          "startUserId": "1111"
+          "startUserId": "1111",
+          "opponent: "1111"
       }
