@@ -55,6 +55,6 @@ URL: ws://host:port/ws
 Сервер отправляет ответ в формате JSON, который содержит уникальный uid:
 
       {
-          "found": true,
+          "startUserId": "1111",
           "room": "1312323"
       }
