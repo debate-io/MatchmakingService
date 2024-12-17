@@ -159,7 +159,8 @@ func sendWithRetry(conn *websocket.Conn, message string, id string) {
 
 func sendResponse(user1, user2 *User) {
 	room := uuid.New()
-	message := fmt.Sprintf(`{"room": "%s", "startUserId": "%s"}`, room, user1.ID)
-	sendWithRetry(user1.Conn, message, user1.ID)
-	sendWithRetry(user2.Conn, message, user2.ID)
+	messagefirst := fmt.Sprintf(`{"room": "%s", "startUserId": "%s", "opponent": "%s"}`, room, user1.ID, user2.ID)
+	messageSecond := fmt.Sprintf(`{"room": "%s", "startUserId": "%s", "opponent": "%s"}`, room, user1.ID, user1.ID)
+	sendWithRetry(user1.Conn, messagefirst, user1.ID)
+	sendWithRetry(user2.Conn, messageSecond, user2.ID)
 }
