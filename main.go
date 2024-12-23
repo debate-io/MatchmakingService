@@ -153,7 +153,7 @@ func sendWithRetry(conn *websocket.Conn, message string, id string) {
 		if waitTime < maxWait {
 			waitTime *= 2
 			if waitTime > maxWait {
-				waitTime = maxWait
+				return
 			}
 		}
 	}
