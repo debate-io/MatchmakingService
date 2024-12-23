@@ -75,7 +75,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Пользователь %s хочет найти игру\n", input.ID)
 
 		// Поиск пары
-		findMatchingPair(user)
+		if len(usersFindingGame) > 1 {
+			findMatchingPair(user)
+		}
 	}
 }
 
