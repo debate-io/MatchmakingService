@@ -61,6 +61,7 @@ type Metatopic struct {
 
 func getTopicByMetatopicName(ctx context.Context, db *pg.DB, metatopicName string) (*Topic, error) {
 	var topic Topic
+
 	err := db.ModelContext(ctx, &topic).
 		Join("JOIN metatopics_topics mt ON mt.topics_id = topic.id").
 		Join("JOIN metatopics m ON m.id = mt.metatopics_id").
@@ -69,6 +70,7 @@ func getTopicByMetatopicName(ctx context.Context, db *pg.DB, metatopicName strin
 	if err != nil {
 		return nil, err
 	}
+
 	return &topic, nil
 }
 
@@ -76,6 +78,7 @@ func main() {
 	sendChan = make(chan string, 100)
 
 	http.HandleFunc("/ws", handleWebSocket)
+
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println("Ошибка при запуске сервера:", err)
@@ -173,9 +176,13 @@ func findMatchingPair(user *User) {
 	if bestMatch != nil {
 		common := lo.Intersect(user.Metatags, bestMatch.Metatags)
 		if len(common) > 0 {
-			topic, err = getTopicByMetatopicName(context.Background(), cnt.Db, common[0])
+			topicMatched, err := getTopicByMetatopicName(context.Background(), cnt.Db, common[0])
 			if err != nil {
 				cnt.Logger.Error("can't get topic by metatopic", zap.String("metatags", common[0]), zap.Error(err))
+			}
+
+			if topicMatched != nil {
+				topic = topicMatched
 			}
 		}
 
