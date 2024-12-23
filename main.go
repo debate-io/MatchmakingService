@@ -86,8 +86,7 @@ func findMatchingPair(user *User) {
 	defer mu.Unlock()
 
 	var bestMatch *User
-	var bestMatchScore int
-	var fallbackMatch *User // Переменная для хранения запасного соперника
+	var bestMatchScore int = 0
 
 	for _, potentialMatch := range usersFindingGame {
 		if potentialMatch.ID == user.ID {
@@ -102,10 +101,6 @@ func findMatchingPair(user *User) {
 			bestMatch = potentialMatch
 		}
 
-		// Если нет совпадений, сохраняем запасного соперника
-		if bestMatchScore == 0 && fallbackMatch == nil {
-			fallbackMatch = potentialMatch
-		}
 	}
 
 	if bestMatch != nil {
@@ -115,11 +110,7 @@ func findMatchingPair(user *User) {
 		fmt.Printf("Пара найдена для пользователей %s и %s\n", user.ID, bestMatch.ID)
 		sendResponse(user, bestMatch)
 	} else {
-		delete(usersFindingGame, user.ID)
-		delete(usersFindingGame, fallbackMatch.ID)
-
-		fmt.Printf("Нет подходящей пары по метатемам для пользователя %s, будет взят запасной соперник %s\n", user.ID, fallbackMatch.ID)
-		sendResponse(user, fallbackMatch)
+		fmt.Printf("Нет подходящей пары по метатемам для пользователя %s\n", user.ID)
 	}
 }
 
