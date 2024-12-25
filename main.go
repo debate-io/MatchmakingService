@@ -25,7 +25,6 @@ type User struct {
 
 var usersFindingGame = map[string]*User{}
 var sendChan chan string
-var mu sync.Mutex
 
 type Container struct {
 	Logger *zap.Logger
@@ -119,10 +118,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user := &User{ID: input.ID, Conn: conn, Metatags: input.Metatags}
-
-		mu.Lock()
 		usersFindingGame[input.ID] = user
-		mu.Unlock()
 
 		sendChan <- input.ID
 
@@ -137,8 +133,6 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 func findMatchingPair(user *User) {
 	cnt := getContainer()
-	mu.Lock()
-	defer mu.Unlock()
 
 	var bestMatch *User
 	var bestMatchScore int
