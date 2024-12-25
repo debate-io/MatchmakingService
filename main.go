@@ -23,8 +23,10 @@ type User struct {
 	Metatags []string
 }
 
-var usersFindingGame = map[string]*User{}
-var sendChan chan string
+var (
+	usersFindingGame = map[string]*User{}
+	mu               sync.Mutex
+)
 
 type Container struct {
 	Logger *zap.Logger
@@ -74,7 +76,6 @@ func getTopicByMetatopicName(ctx context.Context, db *pg.DB, metatopicName strin
 }
 
 func main() {
-	sendChan = make(chan string, 100)
 
 	http.HandleFunc("/ws", handleWebSocket)
 
@@ -118,9 +119,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user := &User{ID: input.ID, Conn: conn, Metatags: input.Metatags}
-		usersFindingGame[input.ID] = user
 
-		sendChan <- input.ID
+		mu.Lock()
+		usersFindingGame[input.ID] = user
+		mu.Unlock()
 
 		fmt.Printf("Пользователь %s хочет найти игру\n", input.ID)
 
@@ -137,6 +139,9 @@ func findMatchingPair(user *User) {
 	var bestMatch *User
 	var bestMatchScore int
 	var fallbackMatch *User // Переменная для хранения запасного соперника
+
+	mu.Lock()
+	defer mu.Unlock()
 
 	for _, potentialMatch := range usersFindingGame {
 		if potentialMatch.ID == user.ID {
