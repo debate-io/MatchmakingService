@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -60,6 +61,24 @@ type Metatopic struct {
 	CreatedAt string
 }
 
+type Game struct {
+	ID             int64     `pg:"id, pk"`
+	FirstPlayerID  int64     `pg:"first_player_id"`
+	SecondPlayerID int64     `pg:"second_player_id"`
+	WinnerID       int64     `pg:"winner_id"`
+	MetatopicID    int64     `pg:"metatopic_id"`
+	TopicID        int64     `pg:"topic_id"`
+	CreatedAt      time.Time `pg:"created_at"`
+}
+
+func insertGame(ctx context.Context, db *pg.DB, game Game) error {
+	if _, err := db.ModelContext(ctx, &game).Insert(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func getTopicByMetatopicName(ctx context.Context, db *pg.DB, metatopicName string) (*Topic, error) {
 	var topic Topic
 
@@ -73,6 +92,19 @@ func getTopicByMetatopicName(ctx context.Context, db *pg.DB, metatopicName strin
 	}
 
 	return &topic, nil
+}
+
+func getMetatopicByName(ctx context.Context, db *pg.DB, metatopicName string) (*Metatopic, error) {
+	var metatopic Metatopic
+
+	err := db.ModelContext(ctx, &metatopic).
+		Where(`name = ? and metatopic.status = 'APPROVED'`, metatopicName).Limit(1).
+		Select()
+	if err != nil {
+		return nil, err
+	}
+
+	return &metatopic, nil
 }
 
 func main() {
@@ -189,13 +221,52 @@ func findMatchingPair(user *User) {
 		delete(usersFindingGame, bestMatch.ID)
 
 		fmt.Printf("Пара найдена для пользователей %s и %s\n", user.ID, bestMatch.ID)
-		sendResponse(user, bestMatch, topic.Name)
+		room := uuid.New()
+
+		metatopic, _ := getMetatopicByName(context.Background(), cnt.Db, user.Metatags[0])
+
+		firstUserID, _ := strconv.ParseInt(user.ID, 10, 64)
+		secondUserID, _ := strconv.ParseInt(bestMatch.ID, 10, 64)
+
+		game := Game{
+			FirstPlayerID:  firstUserID,
+			SecondPlayerID: secondUserID,
+			MetatopicID:    metatopic.ID,
+			TopicID:        topic.ID,
+			CreatedAt:      time.Now(),
+		}
+
+		err := insertGame(context.Background(), cnt.Db, game)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		sendResponse(user, bestMatch, room.String(), topic.Name)
 	} else {
 		delete(usersFindingGame, user.ID)
 		delete(usersFindingGame, fallbackMatch.ID)
 
+		room := uuid.New()
+		metatopic, _ := getMetatopicByName(context.Background(), cnt.Db, user.Metatags[0])
+
+		firstUserID, _ := strconv.ParseInt(user.ID, 10, 64)
+		secondUserID, _ := strconv.ParseInt(fallbackMatch.ID, 10, 64)
+
 		fmt.Printf("Нет подходящей пары по метатемам для пользователя %s, будет взят запасной соперник %s\n", user.ID, fallbackMatch.ID)
-		sendResponse(user, fallbackMatch, topic.Name)
+		game := Game{
+			FirstPlayerID:  firstUserID,
+			SecondPlayerID: secondUserID,
+			MetatopicID:    metatopic.ID,
+			TopicID:        topic.ID,
+			CreatedAt:      time.Now(),
+		}
+
+		err := insertGame(context.Background(), cnt.Db, game)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		sendResponse(user, fallbackMatch, room.String(), topic.Name)
 	}
 }
 
@@ -235,8 +306,7 @@ func sendWithRetry(conn *websocket.Conn, message string, id string) {
 	}
 }
 
-func sendResponse(user1, user2 *User, theme string) {
-	room := uuid.New()
+func sendResponse(user1, user2 *User, room string, theme string) {
 	messagefirst := fmt.Sprintf(`{"room": "%s", "startUserId": "%s", "opponent": "%s", "theme":"%s"}`, room, user1.ID, user2.ID, theme)
 	messageSecond := fmt.Sprintf(`{"room": "%s", "startUserId": "%s", "opponent": "%s", "theme":"%s"}`, room, user1.ID, user1.ID, theme)
 	sendWithRetry(user1.Conn, messagefirst, user1.ID)
