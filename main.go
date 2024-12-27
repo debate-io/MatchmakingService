@@ -66,6 +66,7 @@ type Game struct {
 	FirstPlayerID  int64     `pg:"first_player_id"`
 	SecondPlayerID int64     `pg:"second_player_id"`
 	WinnerID       int64     `pg:"winner_id"`
+	RoomID         string    `pg:"room_uid"`
 	MetatopicID    int64     `pg:"metatopic_id"`
 	TopicID        int64     `pg:"topic_id"`
 	CreatedAt      time.Time `pg:"created_at"`
@@ -229,8 +230,10 @@ func findMatchingPair(user *User) {
 		secondUserID, _ := strconv.ParseInt(bestMatch.ID, 10, 64)
 
 		game := Game{
+			ID:             firstUserID,
 			FirstPlayerID:  firstUserID,
 			SecondPlayerID: secondUserID,
+			RoomID:         room.String(),
 			MetatopicID:    metatopic.ID,
 			TopicID:        topic.ID,
 			CreatedAt:      time.Now(),
@@ -256,6 +259,7 @@ func findMatchingPair(user *User) {
 		game := Game{
 			FirstPlayerID:  firstUserID,
 			SecondPlayerID: secondUserID,
+			RoomID:         room.String(),
 			MetatopicID:    metatopic.ID,
 			TopicID:        topic.ID,
 			CreatedAt:      time.Now(),
