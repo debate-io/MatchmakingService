@@ -230,7 +230,6 @@ func findMatchingPair(user *User) {
 		secondUserID, _ := strconv.ParseInt(bestMatch.ID, 10, 64)
 
 		game := Game{
-			ID:             firstUserID,
 			FirstPlayerID:  firstUserID,
 			SecondPlayerID: secondUserID,
 			RoomID:         room.String(),
